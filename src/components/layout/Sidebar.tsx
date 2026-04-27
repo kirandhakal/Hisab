@@ -27,7 +27,11 @@ const navItems = [
     { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+    collapsed: boolean;
+}
+
+export default function Sidebar({ collapsed }: SidebarProps) {
     const pathname = usePathname();
     const [mobileOpen, setMobileOpen] = useState(false);
     const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -73,18 +77,19 @@ export default function Sidebar() {
             {/* Sidebar */}
             <aside
                 className={cn(
-                    'fixed top-0 left-0 z-50 h-screen w-[260px] bg-white border-r border-slate-200 flex flex-col transition-transform duration-300',
-                    'lg:translate-x-0 lg:static lg:z-auto',
-                    mobileOpen ? 'translate-x-0' : '-translate-x-full'
+                    'fixed top-0 left-0 z-40 h-screen bg-white border-r border-slate-200 flex flex-col transition-all duration-300 ease-in-out overflow-hidden',
+                    collapsed ? 'w-0 lg:w-0' : 'w-[260px]',
+                    'lg:static lg:z-auto',
+                    mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
                 )}
             >
                 {/* Logo */}
-                <div className="px-6 py-5 flex items-center justify-between border-b border-slate-100">
+                <div className="px-6 py-5 flex items-center justify-between border-b border-slate-100 whitespace-nowrap">
                     <Link href="/" className="flex items-center gap-3" onClick={() => setMobileOpen(false)}>
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-sm">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-sm flex-shrink-0">
                             <Calculator className="w-5 h-5 text-white" />
                         </div>
-                        <div>
+                        <div className="overflow-hidden">
                             <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">Hisab</h1>
                             <p className="text-[0.65rem] font-medium text-slate-400 uppercase tracking-widest">Score Keeper</p>
                         </div>
@@ -108,14 +113,16 @@ export default function Sidebar() {
                                 href={item.href}
                                 onClick={() => setMobileOpen(false)}
                                 className={cn(
-                                    'flex items-center gap-3 px-4 py-3 rounded-xl text-[0.9rem] font-medium transition-all duration-200',
+                                    'flex items-center gap-3 px-4 py-3 rounded-xl text-[0.9rem] font-medium transition-all duration-200 whitespace-nowrap',
                                     isActive
                                         ? 'bg-primary-50 text-primary-700 font-semibold'
                                         : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
                                 )}
                             >
                                 <item.icon className={cn('w-5 h-5 flex-shrink-0', isActive ? 'text-primary-600' : '')} />
-                                {item.label}
+                                <span className={cn('transition-opacity duration-300', collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100')}>
+                                    {item.label}
+                                </span>
                             </Link>
                         );
                     })}
@@ -127,7 +134,7 @@ export default function Sidebar() {
                         href="/notifications"
                         onClick={() => setMobileOpen(false)}
                         className={cn(
-                            'flex items-center gap-3 px-4 py-3 rounded-xl text-[0.9rem] font-medium transition-all duration-200',
+                            'flex items-center gap-3 px-4 py-3 rounded-xl text-[0.9rem] font-medium transition-all duration-200 whitespace-nowrap',
                             pathname === '/notifications'
                                 ? 'bg-primary-50 text-primary-700 font-semibold'
                                 : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
@@ -137,22 +144,24 @@ export default function Sidebar() {
                             <Bell className="w-5 h-5 flex-shrink-0" />
                             {unreadCount > 0 && <span className="notification-dot" />}
                         </div>
-                        Notifications
-                        {unreadCount > 0 && (
-                            <span className="ml-auto bg-red-500 text-white text-[0.65rem] font-bold px-2 py-0.5 rounded-full">
-                                {unreadCount}
-                            </span>
-                        )}
+                        <span className={cn('transition-opacity duration-300', collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100')}>
+                            Notifications
+                            {unreadCount > 0 && (
+                                <span className="ml-auto bg-red-500 text-white text-[0.65rem] font-bold px-2 py-0.5 rounded-full">
+                                    {unreadCount}
+                                </span>
+                            )}
+                        </span>
                     </Link>
                     <Link
                         href="/profile"
                         onClick={() => setMobileOpen(false)}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-[0.9rem] font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all duration-200"
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-[0.9rem] font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all duration-200 whitespace-nowrap"
                     >
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-bold">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
                             U
                         </div>
-                        <div>
+                        <div className={cn('transition-opacity duration-300', collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100')}>
                             <p className="text-sm font-semibold text-slate-700">User</p>
                             <p className="text-[0.7rem] text-slate-400">View Profile</p>
                         </div>

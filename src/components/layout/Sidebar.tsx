@@ -29,9 +29,10 @@ const navItems = [
 
 interface SidebarProps {
     collapsed: boolean;
+    onToggle: () => void;
 }
 
-export default function Sidebar({ collapsed }: SidebarProps) {
+export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     const pathname = usePathname();
     const [mobileOpen, setMobileOpen] = useState(false);
     const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -66,13 +67,26 @@ export default function Sidebar({ collapsed }: SidebarProps) {
                 </div>
             </header>
 
-            {/* Mobile Overlay */}
             {mobileOpen && (
                 <div
                     className="lg:hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm"
                     onClick={() => setMobileOpen(false)}
                 />
             )}
+            <button
+                onClick={onToggle}
+                className={cn(
+                    'hidden lg:flex fixed z-50 items-center justify-center w-10 h-10 rounded-lg bg-white border border-slate-200 shadow-sm hover:bg-slate-50 transition-all duration-300',
+                    collapsed ? 'left-4 top-4' : 'left-[276px] top-4'
+                )}
+                aria-label={collapsed ? 'Open sidebar' : 'Close sidebar'}
+            >
+                {collapsed ? (
+                    <Menu className="w-5 h-5 text-slate-600" />
+                ) : (
+                    <X className="w-5 h-5 text-slate-600" />
+                )}
+            </button>
 
             {/* Sidebar */}
             <aside
@@ -84,7 +98,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
                 )}
             >
                 {/* Logo */}
-                <div className="px-6 py-5 flex items-center justify-between border-b border-slate-100 whitespace-nowrap">
+                <div className="px-6 py-5 flex items-center border-b border-slate-100 whitespace-nowrap">
                     <Link href="/" className="flex items-center gap-3" onClick={() => setMobileOpen(false)}>
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-sm flex-shrink-0">
                             <Calculator className="w-5 h-5 text-white" />
@@ -96,10 +110,10 @@ export default function Sidebar({ collapsed }: SidebarProps) {
                     </Link>
                     <button
                         onClick={() => setMobileOpen(false)}
-                        className="lg:hidden btn btn-icon btn-secondary"
+                        className="lg:hidden p-2 rounded-lg hover:bg-slate-100"
                         aria-label="Close menu"
                     >
-                        <X className="w-4 h-4" />
+                        <X className="w-5 h-5 text-slate-600" />
                     </button>
                 </div>
 

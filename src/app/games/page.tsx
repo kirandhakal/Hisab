@@ -6,19 +6,21 @@ import PageHeader from '@/components/ui/PageHeader';
 import GameCard from '@/components/game/GameCard';
 import NewGameModal from '@/components/game/NewGameModal';
 import EmptyState from '@/components/ui/EmptyState';
-import { gameSessions, gameTypeConfig } from '@/data/dummy';
+import { gameTypeConfig } from '@/data/dummy';
+import { useGameSessions } from '@/lib/useGameSessions';
 import { GameType } from '@/types';
 import { cn } from '@/lib/utils';
 
 type StatusFilter = 'all' | 'active' | 'paused' | 'completed';
 
 export default function GamesPage() {
+    const { games, createGame } = useGameSessions();
     const [showNewGame, setShowNewGame] = useState(false);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
     const [typeFilter, setTypeFilter] = useState<GameType | 'all'>('all');
 
-    const filteredGames = gameSessions.filter(game => {
+    const filteredGames = games.filter(game => {
         const matchesSearch = game.name.toLowerCase().includes(search.toLowerCase());
         const matchesStatus = statusFilter === 'all' || game.status === statusFilter;
         const matchesType = typeFilter === 'all' || game.gameType === typeFilter;
@@ -128,7 +130,7 @@ export default function GamesPage() {
             <NewGameModal
                 isOpen={showNewGame}
                 onClose={() => setShowNewGame(false)}
-                onCreateGame={data => console.log('Create game:', data)}
+                onCreateGame={createGame}
             />
         </div>
     );

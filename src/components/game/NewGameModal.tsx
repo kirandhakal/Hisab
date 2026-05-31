@@ -5,8 +5,8 @@ import Modal from '@/components/ui/Modal';
 import { GameType, Player } from '@/types';
 import { players as allPlayers, gameTypeConfig } from '@/data/dummy';
 import PlayerAvatar from '@/components/ui/PlayerAvatar';
-import { cn } from '@/lib/utils';
-import { Plus, X } from 'lucide-react';
+import { cn, generateId } from '@/lib/utils';
+import { Plus } from 'lucide-react';
 
 interface NewGameModalProps {
     isOpen: boolean;
@@ -22,6 +22,7 @@ interface NewGameModalProps {
 export default function NewGameModal({ isOpen, onClose, onCreateGame }: NewGameModalProps) {
     const [name, setName] = useState('');
     const [gameType, setGameType] = useState<GameType>('cards');
+    const [availablePlayers, setAvailablePlayers] = useState<Player[]>(allPlayers);
     const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
     const [maxRounds, setMaxRounds] = useState('');
     const [customPlayerName, setCustomPlayerName] = useState('');
@@ -32,10 +33,27 @@ export default function NewGameModal({ isOpen, onClose, onCreateGame }: NewGameM
         );
     };
 
+    const handleAddCustomPlayer = () => {
+        const playerName = customPlayerName.trim();
+        if (!playerName) return;
+
+        const newPlayer: Player = {
+            id: `custom-${generateId()}`,
+            name: playerName,
+            avatar: playerName.charAt(0).toUpperCase(),
+            color: '#0F766E',
+            isOnline: true,
+        };
+
+        setAvailablePlayers(prev => [...prev, newPlayer]);
+        setSelectedPlayerIds(prev => [...prev, newPlayer.id]);
+        setCustomPlayerName('');
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!name.trim() || selectedPlayerIds.length < 2) return;
-        const selected = allPlayers.filter(p => selectedPlayerIds.includes(p.id));
+        const selected = availablePlayers.filter(p => selectedPlayerIds.includes(p.id));
         onCreateGame({
             name: name.trim(),
             gameType,
@@ -45,6 +63,7 @@ export default function NewGameModal({ isOpen, onClose, onCreateGame }: NewGameM
         // Reset
         setName('');
         setGameType('cards');
+        setAvailablePlayers(allPlayers);
         setSelectedPlayerIds([]);
         setMaxRounds('');
         setCustomPlayerName('');
@@ -115,7 +134,7 @@ export default function NewGameModal({ isOpen, onClose, onCreateGame }: NewGameM
                         Select Players ({selectedPlayerIds.length} selected, minimum 2)
                     </label>
                     <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                        {allPlayers.map(player => {
+                        {availablePlayers.map(player => {
                             const isSelected = selectedPlayerIds.includes(player.id);
                             return (
                                 <button
@@ -165,10 +184,7 @@ export default function NewGameModal({ isOpen, onClose, onCreateGame }: NewGameM
                             type="button"
                             className="btn btn-secondary"
                             disabled={!customPlayerName.trim()}
-                            onClick={() => {
-                                // In production, this would add to the players list
-                                setCustomPlayerName('');
-                            }}
+                            onClick={handleAddCustomPlayer}
                         >
                             <Plus className="w-4 h-4" />
                         </button>

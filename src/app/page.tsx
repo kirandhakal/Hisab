@@ -20,18 +20,19 @@ import PlayerAvatar from '@/components/ui/PlayerAvatar';
 import NewGameModal from '@/components/game/NewGameModal';
 import {
   dashboardStats,
-  gameSessions,
   leaderboard,
   notifications,
   sampleFines,
   players,
 } from '@/data/dummy';
 import { formatRelativeTime, cn } from '@/lib/utils';
+import { useGameSessions } from '@/lib/useGameSessions';
 
 export default function DashboardPage() {
+  const { games, createGame } = useGameSessions();
   const [showNewGame, setShowNewGame] = useState(false);
 
-  const activeGames = gameSessions.filter(g => g.status === 'active');
+  const activeGames = games.filter(g => g.status === 'active');
   const recentNotifications = notifications.slice(0, 4);
   const topPlayers = [...leaderboard].sort((a, b) => b.totalScore - a.totalScore).slice(0, 5);
   const recentFines = sampleFines.slice(0, 3);
@@ -60,7 +61,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
           label="Active Games"
-          value={dashboardStats.activeGames}
+          value={activeGames.length}
           icon={Gamepad2}
           iconColor="text-primary-600"
           iconBg="bg-primary-50"
@@ -252,9 +253,7 @@ export default function DashboardPage() {
       <NewGameModal
         isOpen={showNewGame}
         onClose={() => setShowNewGame(false)}
-        onCreateGame={data => {
-          console.log('New game created:', data);
-        }}
+        onCreateGame={createGame}
       />
     </div>
   );

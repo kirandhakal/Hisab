@@ -1,34 +1,32 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import {
     ArrowLeft,
     Plus,
     AlertTriangle,
     Share2,
-    Pause,
-    Play,
     CheckCircle2,
     Users,
     Clock,
     Trophy,
 } from 'lucide-react';
 import Link from 'next/link';
-import PageHeader from '@/components/ui/PageHeader';
 import ScoreTable from '@/components/game/ScoreTable';
 import ScoreEntryModal from '@/components/game/ScoreEntryModal';
 import FineModal from '@/components/game/FineModal';
 import PlayerAvatar from '@/components/ui/PlayerAvatar';
-import { gameSessions, gameTypeConfig, sampleFines, players } from '@/data/dummy';
-import { formatDate, formatTime, cn, getStatusColor, getPlayerTotalScore, getOrdinal } from '@/lib/utils';
+import { gameTypeConfig, sampleFines, players } from '@/data/dummy';
+import { useGameSessions } from '@/lib/useGameSessions';
+import { formatDate, formatTime, cn, getStatusColor, getPlayerTotalScore } from '@/lib/utils';
 
 export default function GameDetailPage() {
     const params = useParams();
-    const router = useRouter();
+    const { games } = useGameSessions();
     const gameId = params.id as string;
 
-    const game = gameSessions.find(g => g.id === gameId);
+    const game = games.find(g => g.id === gameId);
 
     const [showScoreEntry, setShowScoreEntry] = useState(false);
     const [showFineModal, setShowFineModal] = useState(false);
@@ -40,7 +38,7 @@ export default function GameDetailPage() {
                 <div className="flex flex-col items-center justify-center py-24">
                     <span className="text-5xl mb-4">🔍</span>
                     <h2 className="text-xl font-bold text-slate-700 mb-2">Game not found</h2>
-                    <p className="text-slate-500 mb-6">This game session doesn't exist or has been removed.</p>
+                    <p className="text-slate-500 mb-6">This game session does not exist or has been removed.</p>
                     <Link href="/games" className="btn btn-primary">
                         <ArrowLeft className="w-4 h-4" />
                         Back to Games

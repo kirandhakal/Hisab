@@ -17,13 +17,13 @@ import ScoreTable from '@/components/game/ScoreTable';
 import ScoreEntryModal from '@/components/game/ScoreEntryModal';
 import FineModal from '@/components/game/FineModal';
 import PlayerAvatar from '@/components/ui/PlayerAvatar';
-import { gameTypeConfig, sampleFines, players } from '@/data/dummy';
+import { gameTypeConfig } from '@/data/dummy';
 import { useGameSessions } from '@/lib/useGameSessions';
 import { formatDate, formatTime, cn, getStatusColor, getPlayerTotalScore } from '@/lib/utils';
 
 export default function GameDetailPage() {
     const params = useParams();
-    const { games } = useGameSessions();
+    const { games, addRoundScores, imposeFine } = useGameSessions();
     const gameId = params.id as string;
 
     const game = games.find(g => g.id === gameId);
@@ -65,9 +65,8 @@ export default function GameDetailPage() {
         }))
         .sort((a, b) => b.total - a.total);
 
-    // Fines for this game
-    const gameFines = sampleFines.filter(f =>
-        game.players.some(p => p.id === f.playerId)
+    const gameFines = game.rounds.flatMap(round =>
+        round.scores.flatMap(score => score.fines)
     );
 
     const handleShare = () => {
@@ -256,7 +255,7 @@ export default function GameDetailPage() {
                             {gameFines.length > 0 ? (
                                 <div className="space-y-3">
                                     {gameFines.map(fine => {
-                                        const player = players.find(p => p.id === fine.playerId);
+                                        const player = game.players.find(p => p.id === fine.playerId);
                                         if (!player) return null;
                                         return (
                                             <div
@@ -312,19 +311,21 @@ export default function GameDetailPage() {
 
             {/* Modals */}
             <ScoreEntryModal
+                key={`scores-${game.id}-${currentRound}-${showScoreEntry}`}
                 isOpen={showScoreEntry}
                 onClose={() => setShowScoreEntry(false)}
                 players={game.players}
                 roundNumber={currentRound}
-                onSubmitScores={scores => console.log('Scores submitted:', scores)}
+                onSubmitScores={scores => addRoundScores(game.id, currentRound, scores)}
             />
 
             <FineModal
+                key={`fine-${game.id}-${currentRound}-${showFineModal}`}
                 isOpen={showFineModal}
                 onClose={() => setShowFineModal(false)}
                 players={game.players}
                 currentRound={currentRound}
-                onImposeFine={fine => console.log('Fine imposed:', fine)}
+                onImposeFine={fine => imposeFine(game.id, fine)}
             />
 
             {/* Share Toast */}

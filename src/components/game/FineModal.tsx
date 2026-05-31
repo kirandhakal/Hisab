@@ -35,9 +35,9 @@ export default function FineModal({ isOpen, onClose, players, currentRound, onIm
         if (!selectedPlayerId || !amount) return;
         onImposeFine({
             playerId: selectedPlayerId,
-            amount: parseInt(amount),
+            amount: parseInt(amount, 10),
             reason: reason === 'Other' ? customReason : reason,
-            roundNumber: parseInt(roundNumber),
+            roundNumber: parseInt(roundNumber, 10),
         });
         setSelectedPlayerId('');
         setAmount('');

@@ -28,7 +28,7 @@ export default function ScoreEntryModal({
         e.preventDefault();
         const parsed: Record<string, number> = {};
         for (const [id, val] of Object.entries(scores)) {
-            parsed[id] = parseInt(val) || 0;
+            parsed[id] = parseInt(val, 10) || 0;
         }
         onSubmitScores(parsed);
         onClose();

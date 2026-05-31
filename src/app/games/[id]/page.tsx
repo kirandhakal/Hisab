@@ -1,38 +1,39 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import {
     ArrowLeft,
     Plus,
     AlertTriangle,
     Share2,
-    Pause,
-    Play,
     CheckCircle2,
     Users,
     Clock,
     Trophy,
+    Pencil,
 } from 'lucide-react';
 import Link from 'next/link';
-import PageHeader from '@/components/ui/PageHeader';
 import ScoreTable from '@/components/game/ScoreTable';
 import ScoreEntryModal from '@/components/game/ScoreEntryModal';
 import FineModal from '@/components/game/FineModal';
 import PlayerAvatar from '@/components/ui/PlayerAvatar';
-import { gameSessions, gameTypeConfig, sampleFines, players } from '@/data/dummy';
-import { formatDate, formatTime, cn, getStatusColor, getPlayerTotalScore, getOrdinal } from '@/lib/utils';
+import { gameTypeConfig } from '@/data/dummy';
+import { useGameSessions } from '@/lib/useGameSessions';
+import { formatDate, formatTime, cn, getStatusColor, getPlayerTotalScore } from '@/lib/utils';
 
 export default function GameDetailPage() {
     const params = useParams();
-    const router = useRouter();
+    const { games, addRoundScores, imposeFine } = useGameSessions();
     const gameId = params.id as string;
 
-    const game = gameSessions.find(g => g.id === gameId);
+    const game = games.find(g => g.id === gameId);
 
     const [showScoreEntry, setShowScoreEntry] = useState(false);
     const [showFineModal, setShowFineModal] = useState(false);
     const [showShareToast, setShowShareToast] = useState(false);
+    const [scoreRoundNumber, setScoreRoundNumber] = useState<number | null>(null);
+    const [fineRoundNumber, setFineRoundNumber] = useState<number | null>(null);
 
     if (!game) {
         return (
@@ -40,7 +41,7 @@ export default function GameDetailPage() {
                 <div className="flex flex-col items-center justify-center py-24">
                     <span className="text-5xl mb-4">🔍</span>
                     <h2 className="text-xl font-bold text-slate-700 mb-2">Game not found</h2>
-                    <p className="text-slate-500 mb-6">This game session doesn't exist or has been removed.</p>
+                    <p className="text-slate-500 mb-6">This game session does not exist or has been removed.</p>
                     <Link href="/games" className="btn btn-primary">
                         <ArrowLeft className="w-4 h-4" />
                         Back to Games
@@ -53,7 +54,16 @@ export default function GameDetailPage() {
     const config = gameTypeConfig[game.gameType];
     const statusStyle = getStatusColor(game.status);
     const completedRounds = game.rounds.filter(r => r.isCompleted);
-    const currentRound = completedRounds.length + 1;
+    const pendingRound = [...game.rounds]
+        .sort((a, b) => a.roundNumber - b.roundNumber)
+        .find(round => !round.isCompleted);
+    const nextRound = pendingRound?.roundNumber ?? Math.max(0, ...game.rounds.map(round => round.roundNumber)) + 1;
+    const scoreTargetRound = scoreRoundNumber ?? nextRound;
+    const fineTargetRound = fineRoundNumber ?? scoreTargetRound;
+    const scoreRound = game.rounds.find(round => round.roundNumber === scoreTargetRound);
+    const initialScores = scoreRound
+        ? Object.fromEntries(scoreRound.scores.map(score => [score.playerId, score.score]))
+        : undefined;
 
     // Player standings
     const standings = game.players
@@ -67,14 +77,33 @@ export default function GameDetailPage() {
         }))
         .sort((a, b) => b.total - a.total);
 
-    // Fines for this game
-    const gameFines = sampleFines.filter(f =>
-        game.players.some(p => p.id === f.playerId)
+    const gameFines = game.rounds.flatMap(round =>
+        round.scores.flatMap(score => score.fines)
     );
 
     const handleShare = () => {
         setShowShareToast(true);
         setTimeout(() => setShowShareToast(false), 3000);
+    };
+
+    const openScoreEntry = (roundNumber: number) => {
+        setScoreRoundNumber(roundNumber);
+        setShowScoreEntry(true);
+    };
+
+    const closeScoreEntry = () => {
+        setShowScoreEntry(false);
+        setScoreRoundNumber(null);
+    };
+
+    const openFineModal = (roundNumber: number) => {
+        setFineRoundNumber(roundNumber);
+        setShowFineModal(true);
+    };
+
+    const closeFineModal = () => {
+        setShowFineModal(false);
+        setFineRoundNumber(null);
     };
 
     return (
@@ -122,11 +151,11 @@ export default function GameDetailPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                         {game.status === 'active' && (
                             <>
-                                <button onClick={() => setShowScoreEntry(true)} className="btn btn-primary">
+                                <button onClick={() => openScoreEntry(nextRound)} className="btn btn-primary">
                                     <Plus className="w-4 h-4" />
                                     Add Scores
                                 </button>
-                                <button onClick={() => setShowFineModal(true)} className="btn btn-outline">
+                                <button onClick={() => openFineModal(nextRound)} className="btn btn-outline">
                                     <AlertTriangle className="w-4 h-4" />
                                     Fine
                                 </button>
@@ -173,7 +202,7 @@ export default function GameDetailPage() {
                                             <p className="text-xs text-slate-400">{formatTime(round.timestamp)}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-3 flex-wrap justify-end">
                                         {round.isCompleted && (
                                             <div className="text-right">
                                                 <p className="text-xs text-slate-400">High Score</p>
@@ -192,6 +221,22 @@ export default function GameDetailPage() {
                                                 <><Clock className="w-3 h-3" /> In Progress</>
                                             )}
                                         </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => openScoreEntry(round.roundNumber)}
+                                            className="btn btn-secondary btn-sm"
+                                        >
+                                            <Pencil className="w-3.5 h-3.5" />
+                                            Edit
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => openFineModal(round.roundNumber)}
+                                            className="btn btn-outline btn-sm"
+                                        >
+                                            <AlertTriangle className="w-3.5 h-3.5" />
+                                            Fine
+                                        </button>
                                     </div>
                                 </div>
                             ))}
@@ -258,7 +303,7 @@ export default function GameDetailPage() {
                             {gameFines.length > 0 ? (
                                 <div className="space-y-3">
                                     {gameFines.map(fine => {
-                                        const player = players.find(p => p.id === fine.playerId);
+                                        const player = game.players.find(p => p.id === fine.playerId);
                                         if (!player) return null;
                                         return (
                                             <div
@@ -314,19 +359,23 @@ export default function GameDetailPage() {
 
             {/* Modals */}
             <ScoreEntryModal
+                key={`scores-${game.id}-${scoreTargetRound}-${showScoreEntry}`}
                 isOpen={showScoreEntry}
-                onClose={() => setShowScoreEntry(false)}
+                onClose={closeScoreEntry}
                 players={game.players}
-                roundNumber={currentRound}
-                onSubmitScores={scores => console.log('Scores submitted:', scores)}
+                roundNumber={scoreTargetRound}
+                initialScores={initialScores}
+                onSubmitScores={scores => addRoundScores(game.id, scoreTargetRound, scores)}
             />
 
             <FineModal
+                key={`fine-${game.id}-${fineTargetRound}-${showFineModal}`}
                 isOpen={showFineModal}
-                onClose={() => setShowFineModal(false)}
+                onClose={closeFineModal}
                 players={game.players}
-                currentRound={currentRound}
-                onImposeFine={fine => console.log('Fine imposed:', fine)}
+                currentRound={nextRound}
+                initialRoundNumber={fineTargetRound}
+                onImposeFine={fine => imposeFine(game.id, fine)}
             />
 
             {/* Share Toast */}

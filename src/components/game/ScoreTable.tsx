@@ -80,7 +80,9 @@ export default function ScoreTable({ game }: ScoreTableProps) {
                                                     {roundScore?.score ?? '-'}
                                                 </span>
                                                 {hasFine && (
-                                                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500" title="Fine applied" />
+                                                    <span title="Fine applied">
+                                                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                                                    </span>
                                                 )}
                                             </div>
                                         </td>

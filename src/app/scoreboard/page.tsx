@@ -3,14 +3,16 @@
 import { useState } from 'react';
 import PageHeader from '@/components/ui/PageHeader';
 import ScoreTable from '@/components/game/ScoreTable';
-import { gameSessions, gameTypeConfig } from '@/data/dummy';
+import { gameTypeConfig } from '@/data/dummy';
+import { useGameSessions } from '@/lib/useGameSessions';
 import { cn, getStatusColor } from '@/lib/utils';
 import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
 
 export default function ScoreboardPage() {
-    const [selectedGameId, setSelectedGameId] = useState(gameSessions[0]?.id || '');
-    const selectedGame = gameSessions.find(g => g.id === selectedGameId);
+    const { games } = useGameSessions();
+    const [selectedGameId, setSelectedGameId] = useState(games[0]?.id || '');
+    const selectedGame = games.find(g => g.id === selectedGameId) || games[0];
 
     return (
         <div className="animate-fade-in">
@@ -23,7 +25,7 @@ export default function ScoreboardPage() {
             <div className="card mb-6">
                 <div className="card-body py-3 overflow-x-auto">
                     <div className="flex gap-2 min-w-max">
-                        {gameSessions.map(game => {
+                        {games.map(game => {
                             const isActive = selectedGameId === game.id;
                             const config = gameTypeConfig[game.gameType];
                             const statusStyle = getStatusColor(game.status);

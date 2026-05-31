@@ -10,6 +10,7 @@ interface FineModalProps {
     onClose: () => void;
     players: Player[];
     currentRound: number;
+    initialRoundNumber?: number;
     onImposeFine: (data: { playerId: string; amount: number; reason: string; roundNumber: number }) => void;
 }
 
@@ -23,12 +24,12 @@ const fineReasons = [
     'Other',
 ];
 
-export default function FineModal({ isOpen, onClose, players, currentRound, onImposeFine }: FineModalProps) {
+export default function FineModal({ isOpen, onClose, players, currentRound, initialRoundNumber, onImposeFine }: FineModalProps) {
     const [selectedPlayerId, setSelectedPlayerId] = useState('');
     const [amount, setAmount] = useState('');
     const [reason, setReason] = useState('');
     const [customReason, setCustomReason] = useState('');
-    const [roundNumber, setRoundNumber] = useState(currentRound.toString());
+    const [roundNumber, setRoundNumber] = useState((initialRoundNumber ?? currentRound).toString());
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

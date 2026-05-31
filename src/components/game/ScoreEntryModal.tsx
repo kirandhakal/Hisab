@@ -10,6 +10,7 @@ interface ScoreEntryModalProps {
     onClose: () => void;
     players: Player[];
     roundNumber: number;
+    initialScores?: Record<string, number>;
     onSubmitScores: (scores: Record<string, number>) => void;
 }
 
@@ -18,10 +19,11 @@ export default function ScoreEntryModal({
     onClose,
     players,
     roundNumber,
+    initialScores,
     onSubmitScores,
 }: ScoreEntryModalProps) {
     const [scores, setScores] = useState<Record<string, string>>(
-        Object.fromEntries(players.map(p => [p.id, '']))
+        Object.fromEntries(players.map(p => [p.id, initialScores?.[p.id]?.toString() ?? '']))
     );
 
     const handleSubmit = (e: React.FormEvent) => {

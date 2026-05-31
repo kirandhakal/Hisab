@@ -11,6 +11,7 @@ import {
     Users,
     Clock,
     Trophy,
+    Pencil,
 } from 'lucide-react';
 import Link from 'next/link';
 import ScoreTable from '@/components/game/ScoreTable';
@@ -31,6 +32,8 @@ export default function GameDetailPage() {
     const [showScoreEntry, setShowScoreEntry] = useState(false);
     const [showFineModal, setShowFineModal] = useState(false);
     const [showShareToast, setShowShareToast] = useState(false);
+    const [scoreRoundNumber, setScoreRoundNumber] = useState<number | null>(null);
+    const [fineRoundNumber, setFineRoundNumber] = useState<number | null>(null);
 
     if (!game) {
         return (
@@ -51,7 +54,16 @@ export default function GameDetailPage() {
     const config = gameTypeConfig[game.gameType];
     const statusStyle = getStatusColor(game.status);
     const completedRounds = game.rounds.filter(r => r.isCompleted);
-    const currentRound = completedRounds.length + 1;
+    const pendingRound = [...game.rounds]
+        .sort((a, b) => a.roundNumber - b.roundNumber)
+        .find(round => !round.isCompleted);
+    const nextRound = pendingRound?.roundNumber ?? Math.max(0, ...game.rounds.map(round => round.roundNumber)) + 1;
+    const scoreTargetRound = scoreRoundNumber ?? nextRound;
+    const fineTargetRound = fineRoundNumber ?? scoreTargetRound;
+    const scoreRound = game.rounds.find(round => round.roundNumber === scoreTargetRound);
+    const initialScores = scoreRound
+        ? Object.fromEntries(scoreRound.scores.map(score => [score.playerId, score.score]))
+        : undefined;
 
     // Player standings
     const standings = game.players
@@ -72,6 +84,26 @@ export default function GameDetailPage() {
     const handleShare = () => {
         setShowShareToast(true);
         setTimeout(() => setShowShareToast(false), 3000);
+    };
+
+    const openScoreEntry = (roundNumber: number) => {
+        setScoreRoundNumber(roundNumber);
+        setShowScoreEntry(true);
+    };
+
+    const closeScoreEntry = () => {
+        setShowScoreEntry(false);
+        setScoreRoundNumber(null);
+    };
+
+    const openFineModal = (roundNumber: number) => {
+        setFineRoundNumber(roundNumber);
+        setShowFineModal(true);
+    };
+
+    const closeFineModal = () => {
+        setShowFineModal(false);
+        setFineRoundNumber(null);
     };
 
     return (
@@ -119,11 +151,11 @@ export default function GameDetailPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                         {game.status === 'active' && (
                             <>
-                                <button onClick={() => setShowScoreEntry(true)} className="btn btn-primary">
+                                <button onClick={() => openScoreEntry(nextRound)} className="btn btn-primary">
                                     <Plus className="w-4 h-4" />
                                     Add Scores
                                 </button>
-                                <button onClick={() => setShowFineModal(true)} className="btn btn-outline">
+                                <button onClick={() => openFineModal(nextRound)} className="btn btn-outline">
                                     <AlertTriangle className="w-4 h-4" />
                                     Fine
                                 </button>
@@ -170,7 +202,7 @@ export default function GameDetailPage() {
                                             <p className="text-xs text-slate-400">{formatTime(round.timestamp)}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-3 flex-wrap justify-end">
                                         {round.isCompleted && (
                                             <div className="text-right">
                                                 <p className="text-xs text-slate-400">High Score</p>
@@ -189,6 +221,22 @@ export default function GameDetailPage() {
                                                 <><Clock className="w-3 h-3" /> In Progress</>
                                             )}
                                         </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => openScoreEntry(round.roundNumber)}
+                                            className="btn btn-secondary btn-sm"
+                                        >
+                                            <Pencil className="w-3.5 h-3.5" />
+                                            Edit
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => openFineModal(round.roundNumber)}
+                                            className="btn btn-outline btn-sm"
+                                        >
+                                            <AlertTriangle className="w-3.5 h-3.5" />
+                                            Fine
+                                        </button>
                                     </div>
                                 </div>
                             ))}
@@ -311,20 +359,22 @@ export default function GameDetailPage() {
 
             {/* Modals */}
             <ScoreEntryModal
-                key={`scores-${game.id}-${currentRound}-${showScoreEntry}`}
+                key={`scores-${game.id}-${scoreTargetRound}-${showScoreEntry}`}
                 isOpen={showScoreEntry}
-                onClose={() => setShowScoreEntry(false)}
+                onClose={closeScoreEntry}
                 players={game.players}
-                roundNumber={currentRound}
-                onSubmitScores={scores => addRoundScores(game.id, currentRound, scores)}
+                roundNumber={scoreTargetRound}
+                initialScores={initialScores}
+                onSubmitScores={scores => addRoundScores(game.id, scoreTargetRound, scores)}
             />
 
             <FineModal
-                key={`fine-${game.id}-${currentRound}-${showFineModal}`}
+                key={`fine-${game.id}-${fineTargetRound}-${showFineModal}`}
                 isOpen={showFineModal}
-                onClose={() => setShowFineModal(false)}
+                onClose={closeFineModal}
                 players={game.players}
-                currentRound={currentRound}
+                currentRound={nextRound}
+                initialRoundNumber={fineTargetRound}
                 onImposeFine={fine => imposeFine(game.id, fine)}
             />
 
